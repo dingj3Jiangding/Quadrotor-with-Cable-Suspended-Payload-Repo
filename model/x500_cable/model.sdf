@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sdf version='1.9'>
+  <model name='x500_cable'>
+    <include merge='true'>
+      <uri>x500</uri>
+    </include>
+    
+
+
+    <!-- <joint name="CableJoint" type="fixed">
+      <parent>base_link</parent>
+      <child>cable_base_link</child>
+      <pose relative_to="base_link">0 0 -0.2 0 0 0</pose>
+    </joint> -->
+
+    <!-- <joint name="CableJoint" type="fixed">
+      <parent>base_link</parent>
+      <child>cable_base_link</child>
+      <pose relative_to="base_link">0 0 -0.2 0 0 0</pose>
+    </joint> -->
+
+    <include merge='true'>
+      <uri>model://gazebo_cable</uri>
+      <pose>0 0 0.4 0 0 0</pose>
+    </include>
+
+    <joint name="CableJoint" type="revolute">
+      <pose>0 0 -0.2 0 0 0</pose>
+      <parent>base_link</parent>
+      <child>cable_base_link</child>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>-0.785</lower>
+          <upper>0.785</upper>
+          <effort>50</effort>
+          <velocity>10</velocity>
+        </limit>
+        <dynamics>
+          <damping>3</damping>
+          <friction>1</friction>
+        </dynamics>
+      </axis>
+    </joint>
+
+
+    <!-- test cylinder -->
+
+    <!-- <joint name="cylinder_joint" type="fixed">
+      <parent>base_link</parent>
+      <child>cylinder_link</child>
+      <pose relative_to="base_link">0 0 0.4 0 0 0</pose>    
+    </joint> -->
+
+    
+
+  </model>
+</sdf>
