@@ -12,7 +12,7 @@ import numpy as np
 import time
 import traceback
 
-from ROSE_params import quad_params
+from george_params import quad_params
 from load_ctrl.LoadController import LoadController
 from Traj.PolyTrajPhase1_2 import PolyTrajPhase1_2 as PolyTrajPhase2
 
@@ -67,14 +67,20 @@ class OffboardControl(Node):
             'l': 0.3,
             'g': 9.80665,
             'JQ': np.diag([quad_params['Ixx'], quad_params['Iyy'], quad_params['Izz']]),
-            'kx': np.diag(quad_params['kpx']),
-            'kv': np.diag(quad_params['kdx']),
-            'kI': np.diag([0, 0, 0]),
-            'kq': 2.0,
-            'kw': 0.5,
-            'kR': 10.0,
-            'kOmega': 0.5
+
+            'kx': np.diag([70, 45, 70]),     # Z方向减小一点避免过冲，x增大确保横向回轨
+            'kv': np.diag([15, 18, 15]),     # 阻尼大幅增强，防止震荡（尤其是 Y）
+            'kI': np.diag([0.5, 0.5, 1.0]),          # 积分增强，加快稳态误差修正
+
+            'kq': 3.0,                       # 缆绳方向刚度保持
+            'kw': 1.2,                       # 缆绳角速度略增强
+
+            'kR': 18.0,                      # 姿态刚度略降低，避免角度抖动
+            'kOmega': 0.6                   # 姿态速度反馈略降，抑制 M_z 震荡
         }
+
+
+
 
         self.load_controller = LoadController(load_params, logging=True)
         initState = self.trajectory.update(0)
