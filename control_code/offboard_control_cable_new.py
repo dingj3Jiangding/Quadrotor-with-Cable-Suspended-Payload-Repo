@@ -14,7 +14,8 @@ import traceback
 
 from george_params import quad_params
 from load_ctrl.LoadController import LoadController
-from Traj.PolyTrajPhase1_2 import PolyTrajPhase1_2 as PolyTrajPhase2
+# from Traj.PolyTrajPhase1_2 import PolyTrajPhase1_2 as PolyTrajPhase2
+from Traj.PolyTrajPhase1 import PolyTrajPhase1 as PolyTrajPhase2
 
 
 class OffboardControl(Node):
@@ -68,15 +69,15 @@ class OffboardControl(Node):
             'g': 9.80665,
             'JQ': np.diag([quad_params['Ixx'], quad_params['Iyy'], quad_params['Izz']]),
 
-            'kx': np.diag([70, 45, 70]),     # Z方向减小一点避免过冲，x增大确保横向回轨
-            'kv': np.diag([15, 18, 15]),     # 阻尼大幅增强，防止震荡（尤其是 Y）
-            'kI': np.diag([0.5, 0.5, 1.0]),          # 积分增强，加快稳态误差修正
+            'kx': np.diag([10, 10, 25]),     # Z方向减小一点避免过冲，x增大确保横向回轨
+            'kv': np.diag([4, 4, 3]),     # 阻尼大幅增强，防止震荡（尤其是 Y）
+            'kI': np.diag([0, 0, 0]),          # 积分增强，加快稳态误差修正
 
-            'kq': 3.0,                       # 缆绳方向刚度保持
-            'kw': 1.2,                       # 缆绳角速度略增强
+            'kq': 2,                       # 缆绳方向刚度保持
+            'kw': 0.5,                       # 缆绳角速度略增强
 
-            'kR': 18.0,                      # 姿态刚度略降低，避免角度抖动
-            'kOmega': 0.6                   # 姿态速度反馈略降，抑制 M_z 震荡
+            'kR': 10.0,                      # 姿态刚度略降低，避免角度抖动
+            'kOmega': 0.5                   # 姿态速度反馈略降，抑制 M_z 震荡
         }
 
 

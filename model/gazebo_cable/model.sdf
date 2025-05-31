@@ -87,7 +87,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -146,7 +146,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -206,7 +206,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -265,7 +265,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -325,7 +325,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -384,7 +384,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -444,7 +444,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -503,7 +503,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -563,7 +563,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -622,7 +622,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -682,7 +682,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -741,7 +741,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -801,7 +801,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -860,7 +860,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -920,7 +920,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -979,7 +979,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -1039,7 +1039,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -1098,7 +1098,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -1158,7 +1158,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -1217,7 +1217,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -1277,7 +1277,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -1336,7 +1336,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -1396,7 +1396,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -1455,7 +1455,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -1515,7 +1515,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -1574,7 +1574,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -1634,7 +1634,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -1693,7 +1693,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -1753,7 +1753,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -1812,7 +1812,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -1872,7 +1872,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -1931,7 +1931,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -1991,7 +1991,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -2050,7 +2050,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -2110,7 +2110,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -2169,7 +2169,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -2229,7 +2229,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -2288,7 +2288,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -2348,7 +2348,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -2407,7 +2407,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -2467,7 +2467,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -2526,7 +2526,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -2586,7 +2586,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -2645,7 +2645,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -2705,7 +2705,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -2764,7 +2764,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -2824,7 +2824,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -2883,7 +2883,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -2943,7 +2943,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -3002,7 +3002,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -3062,7 +3062,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -3121,7 +3121,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -3181,7 +3181,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -3240,7 +3240,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -3300,7 +3300,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -3359,7 +3359,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -3419,7 +3419,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -3478,7 +3478,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>
@@ -3538,7 +3538,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.005</mass>
+        <mass>5e-05</mass>
         <inertia>
           <ixx>0.0001</ixx>
           <iyy>0.0001</iyy>
@@ -3597,7 +3597,7 @@
         </geometry>
       </collision>
       <inertial>
-        <mass>0.01</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0.001</ixx>
           <iyy>0.001</iyy>

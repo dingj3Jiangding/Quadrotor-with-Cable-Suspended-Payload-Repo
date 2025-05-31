@@ -55,4 +55,40 @@ fig2.suptitle("Thrust Force and Moment Command")
 plt.tight_layout()
 fig2.savefig(file_path + "_FM.png", dpi=300)
 
+# --- Plot Position Error e_x ---
+e_x = data[["e_x_1", "e_x_2", "e_x_3"]].values
+fig3, axs3 = plt.subplots(3, 1, figsize=(8, 8))
+for i in range(3):
+    axs3[i].plot(t, e_x[:, i], label=f"e_x_{labels[i]}")
+    axs3[i].set_ylabel('Position Error [m]')
+    axs3[i].legend()
+axs3[2].set_xlabel("Time [s]")
+fig3.suptitle("Position Error $e_x = x_L - x_d$")
+plt.tight_layout()
+fig3.savefig(file_path + "_e_x.png", dpi=300)
+
+# --- Plot Velocity Error e_v ---
+e_v = data[["e_v_1", "e_v_2", "e_v_3"]].values
+fig4, axs4 = plt.subplots(3, 1, figsize=(8, 8))
+for i in range(3):
+    axs4[i].plot(t, e_v[:, i], label=f"e_v_{labels[i]}")
+    axs4[i].set_ylabel('Velocity Error [m/s]')
+    axs4[i].legend()
+axs4[2].set_xlabel("Time [s]")
+fig4.suptitle("Velocity Error $e_v = v_L - v_d$")
+plt.tight_layout()
+fig4.savefig(file_path + "_e_v.png", dpi=300)
+
+f = data["f"].values
+# --- Plot Scalar Thrust f ---
+fig5, ax5 = plt.subplots(figsize=(8, 4))
+ax5.plot(t, f, label="f (scalar thrust)", color='purple')
+ax5.set_ylabel("Thrust [N]")
+ax5.set_xlabel("Time [s]")
+ax5.set_title("Scalar Thrust $f$")
+ax5.legend()
+plt.tight_layout()
+fig5.savefig(file_path + "_f.png", dpi=300)
+
+
 plt.show()
