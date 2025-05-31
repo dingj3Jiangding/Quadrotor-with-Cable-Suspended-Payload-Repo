@@ -8,7 +8,7 @@ def quadrotor_attitude_controller(JQ, F, b1, R, R_d_m1, dt, Omega, Omega_d_m1, k
     b1_d = np.cross(b1, b3_d) / np.linalg.norm(np.cross(b1, b3_d))
     b2_d = np.cross(b3_d, b1_d) / np.linalg.norm(np.cross(b3_d, b1_d))
 
-    R_d = np.array([b1_d, b2_d, b3_d])
+    R_d = np.column_stack((b1_d, b2_d, b3_d))
 
     dR_d = np.zeros((3,3))
     

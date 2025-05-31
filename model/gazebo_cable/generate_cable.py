@@ -5,8 +5,8 @@ damping = 20
 friction = 1
 sphere_radius = 0.003
 cylinder_radius = 0.003
-sphere_mass = 0.005
-cylinder_mass = 0.01
+sphere_mass = 0.00005
+cylinder_mass = 0.0001
 
 # Start the SDF template
 sdf_template = f"""
