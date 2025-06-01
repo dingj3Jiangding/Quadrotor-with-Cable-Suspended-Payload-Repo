@@ -16,6 +16,7 @@ from george_params import quad_params
 from load_ctrl.LoadController import LoadController
 # from Traj.PolyTrajPhase1_2 import PolyTrajPhase1_2 as PolyTrajPhase2
 from Traj.PolyTrajPhase1 import PolyTrajPhase1 as PolyTrajPhase2
+from Traj.PolyTraj_hold import HoldTrajectory
 
 
 class OffboardControl(Node):
@@ -59,8 +60,10 @@ class OffboardControl(Node):
         self.vx0 = 0.5
         self.target_offset = 10.0014
 
-        self.trajectory = PolyTrajPhase2(h0=self.h0, vy0=self.vy0, vx0=self.vx0,
-                                         target_x=self.target_offset, target_y=self.target_offset)
+        # self.trajectory = PolyTrajPhase2(h0=self.h0, vy0=self.vy0, vx0=self.vx0,
+        #                                  target_x=self.target_offset, target_y=self.target_offset)
+        
+        self.trajectory = HoldTrajectory()
 
         load_params = {
             'mQ': quad_params['mass'],
