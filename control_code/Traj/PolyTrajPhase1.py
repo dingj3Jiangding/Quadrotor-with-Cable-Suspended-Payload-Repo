@@ -18,7 +18,7 @@ class PolyTrajPhase1(object):
         aQ = pd.read_csv("Traj/quad_load/aQ.csv", header=None).values
 
         total_points = time_arr.shape[0]
-        sample_indices = np.linspace(0, total_points - 1, 1000, dtype=int)
+        sample_indices = np.linspace(0, total_points - 1, 300, dtype=int)
 
         phase1_t_arr = time_arr[sample_indices]
         xQ_sub = xQ[:, sample_indices]
