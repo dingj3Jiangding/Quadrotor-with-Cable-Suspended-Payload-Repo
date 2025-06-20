@@ -72,7 +72,8 @@ class OffboardControl(Node):
         self.control_frequency = quad_params['dt']
         self.controller_counter = 0
 
-        self.mode = 'phase1' # 'phase1', or 'combo'
+        # phase initialization 
+        self.mode = 'phase1' # 'phase1', or 'combo' if choose combo, it runs phase 1 and then phase 2
         self.t_total = 9.0
         self.t_phase_1 = 3.69
         self.t_phase_2 = self.t_total - self.t_phase_1
@@ -82,6 +83,7 @@ class OffboardControl(Node):
         self.t_phase_start_ns = self.get_clock().now().nanoseconds
         self._clock_now_ns = self.get_clock().now
         self.mission_accomplished = False
+
 #        self.trajectory = HoldTrajectory()
         load_params = {
            'mQ': quad_params['mass'],
@@ -101,9 +103,7 @@ class OffboardControl(Node):
            'kOmega': 0.7                   
        }
 
-
-
-
+        # controller initialization
         self.load_controller = LoadController(load_params, logging=True)
         self.geo_controller  = QuadGeoCtrl(quad_params, logging=True)
         initState = self.trajectory.update(0)
@@ -214,6 +214,8 @@ class OffboardControl(Node):
         now_ns = self._clock_now_ns().nanoseconds
         t_rel = (now_ns - self.t_phase_start_ns) * 1e-9
         # print(f"Callback interval dt = {dt*1000:.1f} ms")
+
+        # identify the current phase and whether to switch to the next phase
         if self.current_phase == 1:
             flat_output = self.traj1.update(t_rel)         
             active_ctrl = self.load_controller             
@@ -268,8 +270,8 @@ class OffboardControl(Node):
             f     = out["f"]
             Omega_cmd = out["Omega_cmd"]
         else:
-            state_arr = np.hstack([xQ, vQ, quat, Omega])   # [x y z vx vy vz q_w q_x q_y q_z wx wy wz]
-            out = active_ctrl.update(t_rel, state_arr, flat_output)
+            state_arr = np.hstack([xQ, vQ, quat, Omega])    # check whether quat is in the right order
+            out = active_ctrl.update(t_rel, state_arr, flat_output) # here set flat_output init x_dddot and more = 0
             f     = out["cmd_thrust"]
             Omega_cmd = out["cmd_w"]
 

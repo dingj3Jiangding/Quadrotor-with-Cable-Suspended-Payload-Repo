@@ -171,6 +171,7 @@ class QuadGeoCtrl:
         flat_output['yaw']      = flat_output.get('yaw',      0.0)
         flat_output['yaw_dot']  = flat_output.get('yaw_dot',  0.0)
         flat_output['yaw_ddot'] = flat_output.get('yaw_ddot', 0.0)
+        # here set it to be zero if not provided
         
         def wedge(x):
             """Return wedged vector."""
