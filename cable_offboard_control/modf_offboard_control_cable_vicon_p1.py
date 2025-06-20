@@ -72,9 +72,12 @@ class OffboardControl(Node):
         self.control_frequency = quad_params['dt']
         self.controller_counter = 0
 
-        self.mode = self.declare_parameter('fly_mode','phase1').value
-        self.trajectory_1 = PolyTrajPhase1(t_final=3.69)
-        self.trajectory_2 = PolyTrajPhase2(t_final=4.5)
+        self.mode = 'phase1' # 'phase1', or 'combo'
+        self.t_total = 9.0
+        self.t_phase_1 = 3.69
+        self.t_phase_2 = self.t_total - self.t_phase_1
+        self.trajectory_1 = PolyTrajPhase1(t_final=self.t_phase_1)
+        self.trajectory_2 = PolyTrajPhase2(t_final=self.t_phase_2)
         self.current_phase = 1
         self.t_phase_start_ns = self.get_clock().now().nanoseconds
         self._clock_now_ns = self.get_clock().now
