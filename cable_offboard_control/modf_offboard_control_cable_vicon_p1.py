@@ -15,8 +15,9 @@ import traceback
 
 from george_params import quad_params
 from load_ctrl.LoadController import LoadController
+from load_ctrl.quadrotor_geoCtrl import QuadGeoCtrl
 # from Traj.PolyTrajPhase1_2 import PolyTrajPhase1_2 as PolyTrajPhase2
-from Traj.modf_PolyTrajPhase_1 import PolyTrajPhase1 as PolyTrajPhase1
+from Traj.total_phase_traj import PolyTrajPhase1, PolyTrajPhase2
 from Traj.PolyTraj_hold import HoldTrajectory
 
 def quat2mat(q):
@@ -56,7 +57,8 @@ class OffboardControl(Node):
         self.create_subscription(VehicleAttitude, '/fmu/out/vehicle_attitude', self.vehicle_attitude_callback, qos_profile)
         self.create_subscription(VehicleOdometry, '/fmu/out/vehicle_odometry', self.vehicle_odometry_callback, qos_profile)
         self.create_subscription(PoseStamped, '/vicon/ball/ball', self.load_pose_callback, 10)
-
+        
+        
         self.offboard_setpoint_counter = 0
         self.vehicle_status = VehicleStatus()
         self.vehicle_local_position = VehicleLocalPosition()
@@ -65,17 +67,18 @@ class OffboardControl(Node):
         self.prev_load_time = None
         self.vL_estimate = np.zeros(3)
         self.velocity_filter_alpha = 0.8
-        self._last_time = self.get_clock().now().nanoseconds / 1e9
+        # self._last_time = self.get_clock().now().nanoseconds / 1e9
 
         self.control_frequency = quad_params['dt']
-        self.h0 = 10.3052
-        self.vy0 = 0.5
-        self.vx0 = 0.5
-        self.target_offset = 10.0014
         self.controller_counter = 0
 
-        self.trajectory = PolyTrajPhase1(h0=self.h0, vy0=self.vy0, vx0=self.vx0, target_x=self.target_offset, target_y=self.target_offset)
-        
+        self.mode = self.declare_parameter('fly_mode','phase1').value
+        self.trajectory_1 = PolyTrajPhase1(t_final=3.69)
+        self.trajectory_2 = PolyTrajPhase2(t_final=4.5)
+        self.current_phase = 1
+        self.t_phase_start_ns = self.get_clock().now().nanoseconds
+        self._clock_now_ns = self.get_clock().now
+        self.mission_accomplished = False
 #        self.trajectory = HoldTrajectory()
         load_params = {
            'mQ': quad_params['mass'],
@@ -84,21 +87,22 @@ class OffboardControl(Node):
            'g': 9.80665,
 
            'JQ': np.diag([quad_params['Ixx'], quad_params['Iyy'], quad_params['Izz']]),
-           'kx': np.diag([10, 10, 10]),     # Z方向减小一点避免过冲，x增大确保横向回轨
-           'kv': np.diag([4, 8, 5]),     # 阻尼大幅增强，防止震荡（尤其是 Y）
-           'kI': np.diag([0, 0, 0]),          # 积分增强，加快稳态误差修正
+           'kx': np.diag([10, 10, 10]),    
+           'kv': np.diag([4, 8, 5]),    
+           'kI': np.diag([0, 0, 0]),         
 
-           'kq': 2,                       # 缆绳方向刚度保持
-           'kw': 0.5,                       # 缆绳角速度略增强
+           'kq': 2,                      
+           'kw': 0.5,                     
 
-           'kR': 8.0,                      # 姿态刚度略降低，避免角度抖动
-           'kOmega': 0.7                   # 姿态速度反馈略降，抑制 M_z 震荡
+           'kR': 8.0,                      
+           'kOmega': 0.7                   
        }
 
 
 
 
         self.load_controller = LoadController(load_params, logging=True)
+        self.geo_controller  = QuadGeoCtrl(quad_params, logging=True)
         initState = self.trajectory.update(0)
         self.initialReferencePosition = initState['x']
         self.t_0 = self.get_clock().now().nanoseconds / 1e9
@@ -204,21 +208,29 @@ class OffboardControl(Node):
 
     def load_tracking_control(self):
         # t0_flag = time.monotonic()
-        now = self.get_clock().now().nanoseconds / 1e9
-        dt = now - self._last_time
-        self._last_time = now
+        now_ns = self._clock_now_ns().nanoseconds
+        t_rel = (now_ns - self.t_phase_start_ns) * 1e-9
         # print(f"Callback interval dt = {dt*1000:.1f} ms")
-       
+        if self.current_phase == 1:
+            flat_output = self.traj1.update(t_rel)         
+            active_ctrl = self.load_controller             
+            phase_done  = t_rel > self.traj1.t_final
+        else:
+            flat_output = self.traj2.update(t_rel)        
+            active_ctrl = self.geo_controller            
+            phase_done  = t_rel > self.traj2.t_final
+        if phase_done:
+            if self.current_phase == 1 and self.mode == "combo":
+                self.current_phase = 2
+                self.t_phase_start_ns = now_ns       
+                return                             
+            else:
+                self.mission_accomplished = True
+                self.land()
+                return
         thrust_max = quad_params['thrust_max']
         self.publish_offboard_control_heartbeat_signal(body_rate=True)
-
-        t = (self.get_clock().now().nanoseconds / 1e9) - self.t_0
-        if t > self.trajectory.t_final:
-            self.mission_accomplished = True
-            self.land()
-            return t
 #        t0_traj = time.monotonic()
-        flat_output = self.trajectory.update(t)
 #        t1_traj = time.monotonic()
 #        self.get_logger().info(f"Trajectory update time: {(t1_traj - t0_traj)*1000:.6f} ms")
         xQ = np.array(self.state[0:3])
@@ -243,24 +255,20 @@ class OffboardControl(Node):
             xL = xQ + 0.3 * R @ np.array([0, 0, -1])
             vL = vQ
 
-        state = {
-            'xQ': xQ,
-            'vQ': vQ,
-            'R': R,
-            'Omega': Omega,
-            'xL': xL,
-            'vL': vL,
-            'w': np.zeros(3)
-        }
-
-#        t0_load = time.monotonic()
-        out = self.load_controller.update(self.control_frequency, state, flat_output, t=t)
-#        t1_load = time.monotonic()
-        t0_flag = time.monotonic()
-#        self.get_logger().info(f"controller update time: {(t1_load - t1_load)*1000:.6f} ms")
-        self.controller_counter +=1
-        f = out['f']
-        Omega_cmd = out['Omega_cmd']
+        if self.current_phase == 1:
+            state_dict = {
+                "xQ": xQ, "vQ": vQ, "R": R, "Omega": Omega,
+                "xL": xL, "vL": vL, "w": np.zeros(3)
+            }
+            out = active_ctrl.update(self.control_frequency,
+                                    state_dict, flat_output, t=t_rel)
+            f     = out["f"]
+            Omega_cmd = out["Omega_cmd"]
+        else:
+            state_arr = np.hstack([xQ, vQ, quat, Omega])   # [x y z vx vy vz q_w q_x q_y q_z wx wy wz]
+            out = active_ctrl.update(t_rel, state_arr, flat_output)
+            f     = out["cmd_thrust"]
+            Omega_cmd = out["cmd_w"]
 
         msg = VehicleRatesSetpoint()
         msg.roll = Omega_cmd[0]
@@ -269,9 +277,9 @@ class OffboardControl(Node):
         msg.thrust_body = [0.0, 0.0, -f / thrust_max]
         msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
         self.vehicle_rates_setpoint_publisher.publish(msg)
-        t1_flag = time.monotonic()
+        # t1_flag = time.monotonic()
         # self.get_logger().info(f"Flag time: {(t1_flag - t0_flag)*1000:.6f} ms")
-        return t
+        return t_rel
 
     def timer_callback(self) -> None:
         if self.offboard_setpoint_counter == 20:
