@@ -12,10 +12,12 @@ def quadrotor_attitude_controller(JQ, F, b1, R, R_d_m1, dt, Omega, Omega_d_m1, k
     R_d = np.column_stack((b1_d, b2_d, b3_d))
 
     # dR_d = np.zeros((3,3))
+    dR_d = (R_d - R_d_m1) / dt
     
-    skew_Omega_d = R_d.T @ R_d_m1
-    Omega_d = skew_2_vec(sp.linalg.logm(skew_Omega_d)/dt)
-
+    # skew_Omega_d = R_d.T @ R_d_m1
+    skew_Omega_d = R_d.T @ dR_d
+    # Omega_d = skew_2_vec(sp.linalg.logm(skew_Omega_d)/dt)
+    Omega_d = skew_2_vec(skew_Omega_d)
     # dOmega_d = np.array([0.0,0.0,0.0])
     e_R = skew_2_vec(0.5* (R_d.T @ R - R.T @ R_d))
     e_Omega = Omega - R.T @ R_d @ Omega_d

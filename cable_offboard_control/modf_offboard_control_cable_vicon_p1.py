@@ -19,6 +19,14 @@ from load_ctrl.quadrotor_geoCtrl import QuadGeoCtrl
 # from Traj.PolyTrajPhase1_2 import PolyTrajPhase1_2 as PolyTrajPhase2
 from Traj.total_phase_traj import PolyTrajPhase1, PolyTrajPhase2
 from Traj.PolyTraj_hold import HoldTrajectory
+# import math
+
+def to_float(x):
+
+    x = float(np.asarray(x).item())   
+    # if not math.isfinite(x):
+    #     raise ValueError(f"invaild thrust: {x}")
+    return x
 
 def quat2mat(q):
    x, y, z, w = q
@@ -80,8 +88,6 @@ class OffboardControl(Node):
         self.trajectory_1 = PolyTrajPhase1(t_final=self.t_phase_1)
         self.trajectory_2 = PolyTrajPhase2(t_final=self.t_phase_2)
         self.current_phase = 1
-        # self.t_phase_start_ns = self.get_clock().now().nanoseconds
-        # self._clock_now_ns = self.get_clock().now
         self._last_time = self.get_clock().now().nanoseconds / 1e9
         self.mission_accomplished = False
 
@@ -107,7 +113,7 @@ class OffboardControl(Node):
         # controller initialization
         self.load_controller = LoadController(load_params, logging=True)
         self.geo_controller  = QuadGeoCtrl(quad_params, logging=True)
-        initState = self.trajectory.update(0)
+        initState = self.trajectory_1.update(0)
         self.initialReferencePosition = initState['x']
         self.t_0 = self.get_clock().now().nanoseconds / 1e9
         self.initial_waypoint = self.get_initiliazation_pos()
@@ -212,9 +218,6 @@ class OffboardControl(Node):
 
     def load_tracking_control(self):
         # t0_flag = time.monotonic()
-        # now_ns = self._clock_now_ns().nanoseconds
-        # t_rel = (now_ns - self.t_phase_start_ns) * 1e-9
-        # print(f"Callback interval dt = {dt*1000:.1f} ms")
         now = self.get_clock().now().nanoseconds / 1e9
         dt = now - self._last_time
         self._last_time = now
@@ -222,23 +225,24 @@ class OffboardControl(Node):
 
         # identify the current phase and whether to switch to the next phase
         if self.current_phase == 1:
-            flat_output = self.trajectory_1.update(t_rel)         
-            active_ctrl = self.load_controller             
-            phase_done  = t_rel > self.trajectory_1.t_final
-        else:
-            flat_output = self.trajectory_2.update(t_rel)        
-            active_ctrl = self.geo_controller            
-            phase_done  = t_rel > self.trajectory_2.t_final
-        if phase_done:
-            if self.current_phase == 1 and self.mode == "combo":
-                self.current_phase = 2
-                # self.t_phase_start_ns = now_ns    
-                self.t_0 = now    
-                return  t_rel                           
+            phase_done = t_rel >= self.trajectory_1.t_final
+            if phase_done and self.mode == "combo":
+                self.current_phase  = 2
+                self.t_0  = now         
+                t_rel = 0.0                       
+                flat_output = self.trajectory_2.update(0.0)
+                active_ctrl = self.geo_controller
             else:
+                flat_output = self.trajectory_1.update(t_rel)
+                active_ctrl = self.load_controller
+        else:  
+            phase_done = t_rel >= self.trajectory_2.t_final
+            if phase_done:
                 self.mission_accomplished = True
                 self.land()
                 return t_rel
+            flat_output = self.trajectory_2.update(t_rel)
+            active_ctrl = self.geo_controller
         thrust_max = quad_params['thrust_max']
         self.publish_offboard_control_heartbeat_signal(body_rate=True)
 #        t0_traj = time.monotonic()
@@ -282,10 +286,10 @@ class OffboardControl(Node):
             Omega_cmd = out["cmd_w"]
 
         msg = VehicleRatesSetpoint()
-        msg.roll = Omega_cmd[0]
-        msg.pitch = -Omega_cmd[1]
-        msg.yaw = -Omega_cmd[2]
-        msg.thrust_body = [0.0, 0.0, -f / thrust_max]
+        msg.roll = to_float(Omega_cmd[0])
+        msg.pitch = to_float(-Omega_cmd[1])
+        msg.yaw = to_float(-Omega_cmd[2])
+        msg.thrust_body = [0.0, 0.0, to_float(-f / thrust_max)]
         msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
         self.vehicle_rates_setpoint_publisher.publish(msg)
         # t1_flag = time.monotonic()
@@ -296,7 +300,7 @@ class OffboardControl(Node):
         if self.offboard_setpoint_counter == 20:
             self.engage_offboard_mode()
             self.arm()
-            self.get_logger().info("Arm and offboard Signal sent, Moving to initial point")
+            # self.get_logger().info("Arm and offboard Signal sent, Moving to initial point")
             self.offboard_setpoint_counter +=1
         # self.get_logger().info(f"vehicle_status.nav_state = {self.vehicle_status.nav_state} | "
         #     f"NAVIGATION_STATE_OFFBOARD = {VehicleStatus.NAVIGATION_STATE_OFFBOARD}") 
@@ -304,7 +308,7 @@ class OffboardControl(Node):
             self.publish_offboard_control_heartbeat_signal(pos=True)
             if self.reached_initial_waypoint:
                 self.load_tracking_control()
-                self.get_logger().info("Reach init point")
+                # self.get_logger().info("Reach init point")
             else:
                 self.move_to_initial_waypoint()
 
