@@ -80,8 +80,9 @@ class OffboardControl(Node):
         self.trajectory_1 = PolyTrajPhase1(t_final=self.t_phase_1)
         self.trajectory_2 = PolyTrajPhase2(t_final=self.t_phase_2)
         self.current_phase = 1
-        self.t_phase_start_ns = self.get_clock().now().nanoseconds
-        self._clock_now_ns = self.get_clock().now
+        # self.t_phase_start_ns = self.get_clock().now().nanoseconds
+        # self._clock_now_ns = self.get_clock().now
+        self._last_time = self.get_clock().now().nanoseconds / 1e9
         self.mission_accomplished = False
 
 #        self.trajectory = HoldTrajectory()
@@ -211,28 +212,33 @@ class OffboardControl(Node):
 
     def load_tracking_control(self):
         # t0_flag = time.monotonic()
-        now_ns = self._clock_now_ns().nanoseconds
-        t_rel = (now_ns - self.t_phase_start_ns) * 1e-9
+        # now_ns = self._clock_now_ns().nanoseconds
+        # t_rel = (now_ns - self.t_phase_start_ns) * 1e-9
         # print(f"Callback interval dt = {dt*1000:.1f} ms")
+        now = self.get_clock().now().nanoseconds / 1e9
+        dt = now - self._last_time
+        self._last_time = now
+        t_rel = (self.get_clock().now().nanoseconds / 1e9) - self.t_0
 
         # identify the current phase and whether to switch to the next phase
         if self.current_phase == 1:
-            flat_output = self.traj1.update(t_rel)         
+            flat_output = self.trajectory_1.update(t_rel)         
             active_ctrl = self.load_controller             
-            phase_done  = t_rel > self.traj1.t_final
+            phase_done  = t_rel > self.trajectory_1.t_final
         else:
-            flat_output = self.traj2.update(t_rel)        
+            flat_output = self.trajectory_2.update(t_rel)        
             active_ctrl = self.geo_controller            
-            phase_done  = t_rel > self.traj2.t_final
+            phase_done  = t_rel > self.trajectory_2.t_final
         if phase_done:
             if self.current_phase == 1 and self.mode == "combo":
                 self.current_phase = 2
-                self.t_phase_start_ns = now_ns       
-                return                             
+                # self.t_phase_start_ns = now_ns    
+                self.t_0 = now    
+                return  t_rel                           
             else:
                 self.mission_accomplished = True
                 self.land()
-                return
+                return t_rel
         thrust_max = quad_params['thrust_max']
         self.publish_offboard_control_heartbeat_signal(body_rate=True)
 #        t0_traj = time.monotonic()
