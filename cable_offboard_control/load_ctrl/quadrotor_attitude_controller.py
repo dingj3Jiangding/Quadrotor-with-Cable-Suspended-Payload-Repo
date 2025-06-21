@@ -1,5 +1,5 @@
 import numpy as np
-import sympy as sp
+import scipy as sp
 from .skew_2_vec import skew_2_vec
 from .vec_2_skew import vec_2_skew
 
