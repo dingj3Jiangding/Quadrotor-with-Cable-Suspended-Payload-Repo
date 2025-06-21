@@ -69,20 +69,49 @@ class LoadController:
             self.log_file = open(self.log_path, mode='w', newline='')
             self.writer = csv.writer(self.log_file)
             self.writer.writerow([
+                # 't',
+                # 'xQ_1', 'xQ_2', 'xQ_3',
+                # 'xL_1', 'xL_2', 'xL_3',
+                # 'xd_1', 'xd_2', 'xd_3',
+                # 'q_1', 'q_2', 'q_3',
+                # 'q_d_1', 'q_d_2', 'q_d_3',
+                # 'dq_1', 'dq_2', 'dq_3',
+                # 'f',
+                # 'F_1', 'F_2', 'F_3',
+                # 'taut_flag',
+                # 'integral_xL_error_1', 'integral_xL_error_2', 'integral_xL_error_3',
+                # 'e_x_1', 'e_x_2', 'e_x_3',                 # ✅ 新增误差项
+                # 'e_v_1', 'e_v_2', 'e_v_3',
+                # 'Omega_cmd_1', 'Omega_cmd_2', 'Omega_cmd_3'
                 't',
-                'xQ_1', 'xQ_2', 'xQ_3',
-                'xL_1', 'xL_2', 'xL_3',
-                'xd_1', 'xd_2', 'xd_3',
-                'q_1', 'q_2', 'q_3',
-                'q_d_1', 'q_d_2', 'q_d_3',
-                'dq_1', 'dq_2', 'dq_3',
-                'f',
-                'F_1', 'F_2', 'F_3',
-                'taut_flag',
-                'integral_xL_error_1', 'integral_xL_error_2', 'integral_xL_error_3',
-                'e_x_1', 'e_x_2', 'e_x_3',                 # ✅ 新增误差项
-                'e_v_1', 'e_v_2', 'e_v_3',
-                'Omega_cmd_1', 'Omega_cmd_2', 'Omega_cmd_3'
+                # ★ 传感状态 (xQ/vQ 已含 xL/vL)
+                'xQ_1','xQ_2','xQ_3',
+                'vQ_1','vQ_2','vQ_3',            # ← 新增
+                'xL_1','xL_2','xL_3',
+                'vL_1','vL_2','vL_3',            # ← 新增
+                # ★ 参考轨迹
+                'xd_1','xd_2','xd_3',
+                'vd_1','vd_2','vd_3',            # ← 新增
+                'ad_1','ad_2','ad_3',            # ← 新增
+                # ★ load-position I/O
+                'q_1','q_2','q_3',
+                'dq_1','dq_2','dq_3',
+                'q_d_1','q_d_2','q_d_3',
+                'Fn_1','Fn_2','Fn_3',            # ← 新增 (位置层输出)
+                # ★ load-attitude I/O
+                'f_scalar',
+                'F_att_1','F_att_2','F_att_3',   # ← 已有但改成更清晰名字
+                # ★ quad-attitude I/O
+                'M_1','M_2','M_3',               # ← 新增 (姿态层输出)
+                'Omega_cmd_1','Omega_cmd_2','Omega_cmd_3',
+                # 'R_d_11','R_d_12','R_d_13',      # ← 如想记录 R_d，可按需保留/删
+                # 'R_d_21','R_d_22','R_d_23',
+                # 'R_d_31','R_d_32','R_d_33',
+                # ★ 误差与标志
+                'e_x_1','e_x_2','e_x_3',
+                'e_v_1','e_v_2','e_v_3',
+                'int_e_x_1','int_e_x_2','int_e_x_3',
+                'taut_flag'
             ])
 #            print(f"Logging data to: {self.log_path}")
 
@@ -145,20 +174,6 @@ class LoadController:
         # 简单的累积积分（前向欧拉）
         self.integral_xL_error += e_x_current * dt
 
-        # 可选：梯形法则积分 (更精确，类似 MATLAB 的 trapz)
-        # if self.first_update_done:
-        #     self.integral_xL_error += (self.prev_e_x + e_x_current) * dt / 2.0
-        # else: # 首次更新，使用前向欧拉或将首次误差视为0对积分的贡献（如果从稳态开始）
-        #     self.integral_xL_error += e_x_current * dt # 或者其他初始化策略
-        #     self.first_update_done = True
-        # self.prev_e_x = e_x_current.copy()
-
-        # 可选：添加抗积分饱和 (Anti-windup)
-        # integral_limit = 5.0 # 根据您的系统设置一个合理的限制
-        # self.integral_xL_error = np.clip(self.integral_xL_error, -integral_limit, integral_limit)
-        
-        # --- 控制器调用 ---
-        # 将累积的积分项传入
         q_d, Fn_vector = load_position_controller(xL, xd, vL, vd, ad, self.integral_xL_error,
                                            self.mQ, self.mL, self.g, self.l, q, dq, 
                                            self.kx, self.kv, self.kI, self.lp_counter)
@@ -188,11 +203,23 @@ class LoadController:
         # 日志记录
         if self.logging and t is not None:
             log_data = (
-                [t] + list(xQ) + list(xL) + list(xd) + 
-                list(q) + list(q_d) + list(dq) + 
-                [f_scalar_thrust_component] + list(F_attitude_ctrl_input) + 
-                [int(is_taut)] + list(self.integral_xL_error) + 
-                list(e_x_current) + list(e_v_current) + list(Omega_d_desired)
+                # [t] + list(xQ) + list(xL) + list(xd) + 
+                # list(q) + list(q_d) + list(dq) + 
+                # [f_scalar_thrust_component] + list(F_attitude_ctrl_input) + 
+                # [int(is_taut)] + list(self.integral_xL_error) + 
+                # list(e_x_current) + list(e_v_current) + list(Omega_d_desired)
+                [t] +
+                list(xQ) + list(vQ) +
+                list(xL) + list(vL) +
+                list(xd) + list(vd) + list(ad) +
+                list(q) + list(dq) + list(q_d) +
+                list(Fn_vector) +
+                [f_scalar_thrust_component] + list(F_attitude_ctrl_input) +
+                list(M_torque) + list(Omega_d_desired) +
+                # list(R_d.flatten()) +          
+                list(e_x_current) + list(e_v_current) +
+                list(self.integral_xL_error) +
+                [int(is_taut)]
             )
             self.writer.writerow(log_data)
 
