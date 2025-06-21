@@ -226,23 +226,32 @@ class OffboardControl(Node):
         # identify the current phase and whether to switch to the next phase
         if self.current_phase == 1:
             phase_done = t_rel >= self.trajectory_1.t_final
-            if phase_done and self.mode == "combo":
-                self.current_phase  = 2
-                self.t_0  = now         
-                t_rel = 0.0                       
-                flat_output = self.trajectory_2.update(0.0)
-                active_ctrl = self.geo_controller
-            else:
+
+            if phase_done:                                   
+                if self.mode == "combo":                    
+                    self.current_phase = 2
+                    self.t_0 = now                        
+                    t_rel = 0.0
+                    flat_output = self.trajectory_2.update(0.0)
+                    active_ctrl = self.geo_controller
+
+                elif self.mode == "phase1":                 
+                    self.mission_accomplished = True
+                    self.land()
+                    return t_rel                            
+               
+            else:                                           
                 flat_output = self.trajectory_1.update(t_rel)
                 active_ctrl = self.load_controller
-        else:  
+        else:
             phase_done = t_rel >= self.trajectory_2.t_final
-            if phase_done:
+            if phase_done:                                  
                 self.mission_accomplished = True
                 self.land()
                 return t_rel
             flat_output = self.trajectory_2.update(t_rel)
             active_ctrl = self.geo_controller
+
         thrust_max = quad_params['thrust_max']
         self.publish_offboard_control_heartbeat_signal(body_rate=True)
 #        t0_traj = time.monotonic()

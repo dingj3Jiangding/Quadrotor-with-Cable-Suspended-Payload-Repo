@@ -13,7 +13,7 @@ from .rot_2_eul import rot_2_eul
 
 class LoadController:
     def __init__(self, params, logging=True, log_dir=None):
-        # 控制参数
+        
         self.mQ = params['mQ']
         self.mL = params['mL']
         self.l = params['l']
@@ -29,17 +29,12 @@ class LoadController:
         self.kR = params['kR']
         self.kOmega = params['kOmega']
 
-        # 初始状态和历史值
         self.q_d_m1 = np.zeros(3)
         self.q_d_m2 = np.zeros(3)
         self.R_d_m1 = np.eye(3)
         self.Omega_d_m1 = np.zeros(3)
         
-        # --- 新增：用于累积位置误差积分项 ---
         self.integral_xL_error = np.zeros(3)
-        # --- 新增：用于存储上一次的位置误差（如果采用梯形积分） ---
-        # self.prev_e_x = np.zeros(3) # 如果使用梯形积分则取消注释
-        # self.first_update_done = False # 用于梯形积分的初始化
 
         self.la_counter = 0
         self.lp_counter = 0
@@ -52,19 +47,18 @@ class LoadController:
         if self.logging:
             if log_dir is None:
                
-                log_dir = os.getcwd() # 或者根据您的项目结构调整
+                log_dir = os.getcwd()
                 
             date_str = datetime.now().strftime("%Y-%m-%d")
-            
-            # 确保日志目录存在
-            # log_files_dir = os.path.join(log_dir, "log_files") # 将日志文件放入一个子文件夹
-            log_files_dir = log_dir # 直接使用log_dir
+
+            # log_files_dir = os.path.join(log_dir, "log_files") 
+            log_files_dir = log_dir 
             os.makedirs(log_files_dir, exist_ok=True)
 
             existing_files = [f for f in os.listdir(log_files_dir) if f.startswith(f"load_data-{date_str}") and f.endswith(".csv")]
             file_number = len(existing_files) + 1
             filename = f"load_data-{date_str}-{file_number}.csv"
-            self.log_path = os.path.join(log_files_dir, filename) # 使用新的日志文件目录
+            self.log_path = os.path.join(log_files_dir, filename) 
             
             self.log_file = open(self.log_path, mode='w', newline='')
             self.writer = csv.writer(self.log_file)
@@ -102,7 +96,7 @@ class LoadController:
                 'f_scalar',
                 'F_att_1','F_att_2','F_att_3',   # ← 已有但改成更清晰名字
                 # ★ quad-attitude I/O
-                'M_1','M_2','M_3',               # ← 新增 (姿态层输出)
+                # 'M_1','M_2','M_3',               # ← 新增 (姿态层输出)
                 'Omega_cmd_1','Omega_cmd_2','Omega_cmd_3',
                 # 'R_d_11','R_d_12','R_d_13',      # ← 如想记录 R_d，可按需保留/删
                 # 'R_d_21','R_d_22','R_d_23',
@@ -111,7 +105,7 @@ class LoadController:
                 'e_x_1','e_x_2','e_x_3',
                 'e_v_1','e_v_2','e_v_3',
                 'int_e_x_1','int_e_x_2','int_e_x_3',
-                'taut_flag'
+                # 'taut_flag'
             ])
 #            print(f"Logging data to: {self.log_path}")
 
@@ -131,30 +125,13 @@ class LoadController:
         delta = xL - xQ
         delta_norm = np.linalg.norm(delta)
 
-        taut_threshold_lower = self.l - 0.01 
-        taut_threshold_upper = self.l + 0.01
+        # taut_threshold_lower = self.l - 0.01 
+        # taut_threshold_upper = self.l + 0.01
 
-        is_taut = (delta_norm >= taut_threshold_lower) and (delta_norm < taut_threshold_upper)
+        # is_taut = (delta_norm >= taut_threshold_lower) and (delta_norm < taut_threshold_upper)
 
-
-        if True: # 缆绳拉紧
-            q = delta / delta_norm # 确保 q 是单位向量 (delta_norm 替换 self.l 以应对微小长度变化)
-            # dq = (vL - vQ) / self.l # 原错误符号
-            dq = -(vQ - vL) / delta_norm # --- 修改点：修正符号，并用 delta_norm 替换 self.l ---
-        else: # 缆绳松弛 (nontaut)
-
-            q_direction = xL - xQ # MATLAB 中 q 指向负载
-            norm_q_direction = np.linalg.norm(q_direction)
-            if norm_q_direction < 1e-9:
-                q = np.array([0.,0.,-1.]) # 默认方向，例如垂直向下
-            else:
-                q = q_direction / norm_q_direction # 确保是单位向量
-            
-
-            if 'w' in state and state['w'] is not None:
-                 dq = np.cross(state['w'], q) # 如果 w 是缆绳角速度 omega_q
-            else: # 如果没有提供缆绳角速度，使用一个简化的或需要您根据模型定义的 dq
-                 dq = np.cross(vQ - vL, q) / self.l # 保留原Python的计算作为占位符
+        q = delta / delta_norm 
+        dq = -(vQ - vL) / delta_norm 
 
 #        print(f"[{t:.3f}s] dq = {dq}, ||dq||^2 = {np.dot(dq, dq):.6f}")
 #        print(f"vQ = {vQ}, vL = {vL}, vQ - vL = {vQ - vL}")
@@ -215,11 +192,11 @@ class LoadController:
                 list(q) + list(dq) + list(q_d) +
                 list(Fn_vector) +
                 [f_scalar_thrust_component] + list(F_attitude_ctrl_input) +
-                list(M_torque) + list(Omega_d_desired) +
+                list(Omega_d_desired) +
                 # list(R_d.flatten()) +          
                 list(e_x_current) + list(e_v_current) +
-                list(self.integral_xL_error) +
-                [int(is_taut)]
+                list(self.integral_xL_error) 
+                # [int(is_taut)]
             )
             self.writer.writerow(log_data)
 
@@ -231,7 +208,7 @@ class LoadController:
             'dq': dq,
             'q_d': q_d,                     # 来自 load_position_controller
             'F': F_attitude_ctrl_input,     # 来自 load_attitude_controller
-            'taut': is_taut,                 # 使用修正后的 is_taut
+            # 'taut': is_taut,                 # 使用修正后的 is_taut
             'Omega_cmd': Omega_d_desired
         }
 
