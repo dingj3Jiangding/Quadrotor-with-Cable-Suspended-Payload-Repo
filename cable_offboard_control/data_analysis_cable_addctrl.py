@@ -1,94 +1,101 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from tkinter import filedialog
-import tkinter as tk
+from tkinter import filedialog, Tk
+from pathlib import Path
 
-# Hide tkinter root window
-root = tk.Tk()
-root.withdraw()
+plt.rcParams["figure.dpi"] = 120  # 分辨率
 
-# Open file dialog
+# ── 1. 选择 CSV ──────────────────────────────────────────
+root = Tk(); root.withdraw()
 file_path = filedialog.askopenfilename(
-    title="Select your CSV log",
-    filetypes=(("CSV files", "*.csv"), ("All files", "*.*"))
+    title="Select log CSV",
+    filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
 )
-
 if not file_path:
-    print("No file selected.")
-    exit()
+    print("❗ No file selected."); exit()
+file_path = Path(file_path)
+print(f"📂 Selected: {file_path}")
 
-print(f"📂 Selected file: {file_path}")
-
-# Load CSV with header
+# ── 2. 读取数据 ──────────────────────────────────────────
 data = pd.read_csv(file_path)
+t = data["t"].to_numpy()
 
-# Extract variables
-t = data["t"].values
-xL = data[["xL_1", "xL_2", "xL_3"]].values
-xd = data[["xd_1", "xd_2", "xd_3"]].values
-F = data[["F_1", "F_2", "F_3"]].values
-M = data[["M_1", "M_2", "M_3"]].values
+def cols(prefix):
+    return data[[f"{prefix}{i}" for i in (1, 2, 3)]].to_numpy()
 
-# --- Plot Position Tracking (Load vs Desired) ---
-fig1, axs = plt.subplots(3, 1, figsize=(8, 8))
-labels = ['x', 'y', 'z']
+xL, vL   = cols("xL_"),  cols("vL_")
+xd, vd   = cols("xd_"),  cols("vd_")
+ad       = cols("ad_") if {"ad_1","ad_2","ad_3"}.issubset(data) else None
+q, dq    = cols("q_"),   cols("dq_")
+q_d      = cols("q_d_")
+Fn       = cols("Fn_")
+F_att    = cols("F_att_")
+M        = cols("M_")
+Ω_cmd    = cols("Omega_cmd_")
+e_x, e_v = cols("e_x_"), cols("e_v_")
+int_e_x  = cols("int_e_x_")
+f_scalar = data["f_scalar"].to_numpy()
+
+labels = ["x", "y", "z"]
+
+# ── 3. 位置跟踪 ──────────────────────────────────────────
+fig, axs = plt.subplots(3, 1, figsize=(8, 7), sharex=True)
 for i in range(3):
-    axs[i].plot(t, xL[:, i], label='xL_' + labels[i], color='r')
-    axs[i].plot(t, xd[:, i], label='xd_' + labels[i], color='b')
-    axs[i].set_ylabel('Position [m]')
-    axs[i].legend()
-axs[2].set_xlabel('Time [s]')
-fig1.suptitle('Load Position vs Desired Trajectory')
-plt.tight_layout()
-fig1.savefig(file_path + "_pos.png", dpi=300)
+    axs[i].plot(t, xL[:, i], "r-",  label=f"xL_{labels[i]}")
+    axs[i].plot(t, xd[:, i], "b--", label=f"xd_{labels[i]}")
+    axs[i].set_ylabel("pos [m]"); axs[i].legend()
+axs[-1].set_xlabel("time [s]")
+fig.suptitle("Load Position vs Desired"); fig.tight_layout()
+fig.savefig(file_path.with_suffix("_pos.png"))
 
-# --- Plot Force and Moment ---
-fig2, axs2 = plt.subplots(3, 1, figsize=(8, 8))
+# ── 4. 速度跟踪 ──────────────────────────────────────────
+fig, axs = plt.subplots(3, 1, figsize=(8, 7), sharex=True)
 for i in range(3):
-    axs2[i].plot(t, F[:, i], label=f"F_{labels[i]}")
-    axs2[i].plot(t, M[:, i], label=f"M_{labels[i]}")
-    axs2[i].legend()
-    axs2[i].set_ylabel('Force / Moment')
-axs2[2].set_xlabel("Time [s]")
-fig2.suptitle("Thrust Force and Moment Command")
-plt.tight_layout()
-fig2.savefig(file_path + "_FM.png", dpi=300)
+    axs[i].plot(t, vL[:, i], "r-",  label=f"vL_{labels[i]}")
+    axs[i].plot(t, vd[:, i], "b--", label=f"vd_{labels[i]}")
+    axs[i].set_ylabel("vel [m/s]"); axs[i].legend()
+axs[-1].set_xlabel("time [s]")
+fig.suptitle("Load Velocity vs Desired"); fig.tight_layout()
+fig.savefig(file_path.with_suffix("_vel.png"))
 
-# --- Plot Position Error e_x ---
-e_x = data[["e_x_1", "e_x_2", "e_x_3"]].values
-fig3, axs3 = plt.subplots(3, 1, figsize=(8, 8))
+# ── 5. 误差 e_x & e_v ──────────────────────────────────
+for err, name in [(e_x, "e_x"), (e_v, "e_v")]:
+    fig, axs = plt.subplots(3, 1, figsize=(8, 7), sharex=True)
+    for i in range(3):
+        axs[i].plot(t, err[:, i], label=f"{name}_{labels[i]}")
+        axs[i].set_ylabel(name); axs[i].legend()
+    axs[-1].set_xlabel("time [s]")
+    fig.suptitle(f"{name} tracking error"); fig.tight_layout()
+    fig.savefig(file_path.with_suffix(f"_{name}.png"))
+
+# ── 6. 力向量比较 ────────────────────────────────────────
+fig, axs = plt.subplots(3, 1, figsize=(8, 7), sharex=True)
 for i in range(3):
-    axs3[i].plot(t, e_x[:, i], label=f"e_x_{labels[i]}")
-    axs3[i].set_ylabel('Position Error [m]')
-    axs3[i].legend()
-axs3[2].set_xlabel("Time [s]")
-fig3.suptitle("Position Error $e_x = x_L - x_d$")
-plt.tight_layout()
-fig3.savefig(file_path + "_e_x.png", dpi=300)
+    axs[i].plot(t, Fn[:, i], "g-",  label=f"Fn_{labels[i]}")
+    axs[i].plot(t, F_att[:, i], "m--", label=f"F_att_{labels[i]}")
+    axs[i].set_ylabel("N"); axs[i].legend()
+axs[-1].set_xlabel("time [s]")
+fig.suptitle("Position-layer vs Attitude-layer Force"); fig.tight_layout()
+fig.savefig(file_path.with_suffix("_forces.png"))
 
-# --- Plot Velocity Error e_v ---
-e_v = data[["e_v_1", "e_v_2", "e_v_3"]].values
-fig4, axs4 = plt.subplots(3, 1, figsize=(8, 8))
+# ── 7. 标量推力 + 力矩 ───────────────────────────────────
+fig, axs = plt.subplots(4, 1, figsize=(8, 8), sharex=True)
+axs[0].plot(t, f_scalar, "purple", label="f_scalar"); axs[0].legend()
 for i in range(3):
-    axs4[i].plot(t, e_v[:, i], label=f"e_v_{labels[i]}")
-    axs4[i].set_ylabel('Velocity Error [m/s]')
-    axs4[i].legend()
-axs4[2].set_xlabel("Time [s]")
-fig4.suptitle("Velocity Error $e_v = v_L - v_d$")
-plt.tight_layout()
-fig4.savefig(file_path + "_e_v.png", dpi=300)
+    axs[i+1].plot(t, M[:, i], label=f"M_{labels[i]}"); axs[i+1].legend()
+axs[0].set_ylabel("N"); [ax.set_ylabel("Nm") for ax in axs[1:]]
+axs[-1].set_xlabel("time [s]")
+fig.suptitle("Scalar Thrust + Body Moments"); fig.tight_layout()
+fig.savefig(file_path.with_suffix("_f_M.png"))
 
-f = data["f"].values
-# --- Plot Scalar Thrust f ---
-fig5, ax5 = plt.subplots(figsize=(8, 4))
-ax5.plot(t, f, label="f (scalar thrust)", color='purple')
-ax5.set_ylabel("Thrust [N]")
-ax5.set_xlabel("Time [s]")
-ax5.set_title("Scalar Thrust $f$")
-ax5.legend()
-plt.tight_layout()
-fig5.savefig(file_path + "_f.png", dpi=300)
-
+# ── 8. 期望角速度 Ω_cmd ─────────────────────────────────
+fig, axs = plt.subplots(3, 1, figsize=(8, 7), sharex=True)
+for i in range(3):
+    axs[i].plot(t, Ω_cmd[:, i], label=f"Ω_cmd_{labels[i]}"); axs[i].legend()
+    axs[i].set_ylabel("rad/s")
+axs[-1].set_xlabel("time [s]")
+fig.suptitle("Desired Body Angular Velocity Ω_cmd"); fig.tight_layout()
+fig.savefig(file_path.with_suffix("_Omega_cmd.png"))
 
 plt.show()
