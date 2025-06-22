@@ -1,0 +1,228 @@
+Timer unit: 1e-06 s
+
+Total time: 2.72792 s
+File: /home/px4_ros_com-main/src/examples/cable_offboard_control/load_ctrl/LoadController.py
+Function: update at line 130
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   130                                               @profile
+   131                                               def update(self, dt, state, ref, t=None):
+   132                                                   # 解包状态
+   133       435       2294.0      5.3      0.1          xQ = state['xQ']
+   134       435       2069.0      4.8      0.1          vQ = state['vQ']
+   135       435       1471.0      3.4      0.1          R = state['R']
+   136       435       1518.0      3.5      0.1          Omega = state['Omega']
+   137       435       1617.0      3.7      0.1          xL = state['xL']
+   138       435       1529.0      3.5      0.1          vL = state['vL']
+   139                                                   # w = state['w'] # 'w' (负载角速度) 在您的MATLAB代码中是w_0，并且在taut_dynamics中计算得到
+   140                                                                  # 在Python中，如果不是直接从状态中传入，需要确保其来源或计算方式
+   141                                           
+   142                                                   # 判断缆绳是否拉紧
+   143       435       8743.0     20.1      0.3          delta = xL - xQ
+   144       435      44304.0    101.8      1.6          delta_norm = np.linalg.norm(delta)
+   145                                           
+   146       435       2317.0      5.3      0.1          taut_threshold_lower = self.l - 0.01 
+   147       435       2455.0      5.6      0.1          taut_threshold_upper = self.l + 0.01
+   148                                           
+   149       435       4553.0     10.5      0.2          is_taut = (delta_norm >= taut_threshold_lower) and (delta_norm < taut_threshold_upper)
+   150                                           
+   151                                           
+   152                                                   if True: # 缆绳拉紧
+   153       435      10780.0     24.8      0.4              q = delta / delta_norm # 确保 q 是单位向量 (delta_norm 替换 self.l 以应对微小长度变化)
+   154                                                       # dq = (vL - vQ) / self.l # 原错误符号
+   155       435      20046.0     46.1      0.7              dq = -(vQ - vL) / delta_norm # --- 修改点：修正符号，并用 delta_norm 替换 self.l ---
+   156                                                   else: # 缆绳松弛 (nontaut)
+   157                                           
+   158                                                       q_direction = xL - xQ # MATLAB 中 q 指向负载
+   159                                                       norm_q_direction = np.linalg.norm(q_direction)
+   160                                                       if norm_q_direction < 1e-9:
+   161                                                           q = np.array([0.,0.,-1.]) # 默认方向，例如垂直向下
+   162                                                       else:
+   163                                                           q = q_direction / norm_q_direction # 确保是单位向量
+   164                                                       
+   165                                           
+   166                                                       if 'w' in state and state['w'] is not None:
+   167                                                            dq = np.cross(state['w'], q) # 如果 w 是缆绳角速度 omega_q
+   168                                                       else: # 如果没有提供缆绳角速度，使用一个简化的或需要您根据模型定义的 dq
+   169                                                            dq = np.cross(vQ - vL, q) / self.l # 保留原Python的计算作为占位符
+   170                                           
+   171                                           #        print(f"[{t:.3f}s] dq = {dq}, ||dq||^2 = {np.dot(dq, dq):.6f}")
+   172                                           #        print(f"vQ = {vQ}, vL = {vL}, vQ - vL = {vQ - vL}")
+   173                                           #        print(f"is_taut = {is_taut}, delta_norm = {delta_norm}")
+   174                                           
+   175                                           
+   176                                                   # 解包参考轨迹
+   177       435       2336.0      5.4      0.1          xd = ref['x']
+   178       435       1777.0      4.1      0.1          vd = ref['x_dot']
+   179       435       1764.0      4.1      0.1          ad = ref['x_ddot'] # 期望负载加速度
+   180       435       6600.0     15.2      0.2          b1 = ref['b1'] if 'b1' in ref else np.array([0.0, 1.0, 0.0]) # 期望偏航方向
+   181                                           
+   182                                                   # --- 计算并累积积分项 ---
+   183       435       5326.0     12.2      0.2          e_x_current = xL - xd
+   184       435       5986.0     13.8      0.2          e_v_current = vL - vd
+   185                                                   
+   186                                                   # 简单的累积积分（前向欧拉）
+   187       435      17131.0     39.4      0.6          self.integral_xL_error += e_x_current * dt
+   188                                           
+   189                                                   # 可选：梯形法则积分 (更精确，类似 MATLAB 的 trapz)
+   190                                                   # if self.first_update_done:
+   191                                                   #     self.integral_xL_error += (self.prev_e_x + e_x_current) * dt / 2.0
+   192                                                   # else: # 首次更新，使用前向欧拉或将首次误差视为0对积分的贡献（如果从稳态开始）
+   193                                                   #     self.integral_xL_error += e_x_current * dt # 或者其他初始化策略
+   194                                                   #     self.first_update_done = True
+   195                                                   # self.prev_e_x = e_x_current.copy()
+   196                                           
+   197                                                   # 可选：添加抗积分饱和 (Anti-windup)
+   198                                                   # integral_limit = 5.0 # 根据您的系统设置一个合理的限制
+   199                                                   # self.integral_xL_error = np.clip(self.integral_xL_error, -integral_limit, integral_limit)
+   200                                                   
+   201                                                   # --- 控制器调用 ---
+   202                                                   # 将累积的积分项传入
+   203       870     154669.0    177.8      5.7          q_d, Fn_vector = load_position_controller(xL, xd, vL, vd, ad, self.integral_xL_error,
+   204       435       2014.0      4.6      0.1                                             self.mQ, self.mL, self.g, self.l, q, dq, 
+   205       435       2654.0      6.1      0.1                                             self.kx, self.kv, self.kI)
+   206                                           #        print(self.lp_counter)
+   207                                           
+   208                                                   # 确保 Fn_vector 是 load_attitude_controller 所期望的格式 (应该是3x1的numpy array)
+   209       870    1335092.0   1534.6     48.9          F_attitude_ctrl_input, f_scalar_thrust_component = load_attitude_controller(
+   210       435       1716.0      3.9      0.1                                                                  self.mQ, self.l, R, Fn_vector, 
+   211       435       1598.0      3.7      0.1                                                                  q, dq, q_d, 
+   212       435       2191.0      5.0      0.1                                                                  self.q_d_m1, self.q_d_m2, dt, 
+   213       435       2926.0      6.7      0.1                                                                  self.kq, self.kw, self.dq_d_prev)
+   214                                           #        print(self.la_counter)
+   215                                           
+   216       870    1032244.0   1186.5     37.8          M_torque, R_d_desired, Omega_d_desired = quadrotor_attitude_controller(
+   217       435       2615.0      6.0      0.1                                                                  self.JQ, F_attitude_ctrl_input, b1, R, 
+   218       435       2330.0      5.4      0.1                                                                  self.R_d_m1, dt, Omega, 
+   219       435       1966.0      4.5      0.1                                                                  self.Omega_d_m1, self.kR, self.kOmega)
+   220                                           #       print(self.qa_counter)
+   221                                           
+   222                                                   # 更新历史状态，用于下一周期的微分计算 (q_d, R_d, Omega_d)
+   223       435       7474.0     17.2      0.3          self.q_d_m2 = self.q_d_m1.copy()
+   224       435       4155.0      9.6      0.2          self.q_d_m1 = q_d.copy() # q_d 来自位置控制器
+   225       435       4896.0     11.3      0.2          self.R_d_m1 = R_d_desired.copy() # R_d_desired 来自姿态控制器
+   226       435       3697.0      8.5      0.1          self.Omega_d_m1 = Omega_d_desired.copy() # Omega_d_desired 来自姿态控制器
+   227                                                   # self.q_prev = q.copy() # 如果 nontaut 状态的 dq 使用 (q - q_prev)/dt
+   228                                           
+   229                                                   # 日志记录
+   230       435       2798.0      6.4      0.1          if self.logging and t is not None:
+   231                                                       # log_data = (
+   232                                                       #     [t] + list(xQ) + list(xL) + list(xd) + 
+   233                                                       #     list(q) + list(q_d) + list(dq) + 
+   234                                                       #     [f_scalar_thrust_component] + list(F_attitude_ctrl_input) + 
+   235                                                       #     [int(is_taut)] + list(self.integral_xL_error) + 
+   236                                                       #     list(e_x_current) + list(e_v_current) + list(Omega_d_desired)
+   237                                                       # )
+   238                                                       log_data = (
+   239                                                           # [t] + list(xQ) + list(xL) + list(xd) + 
+   240                                                           # list(q) + list(q_d) + list(dq) + 
+   241                                                           # [f_scalar_thrust_component] + list(F_attitude_ctrl_input) + 
+   242                                                           # [int(is_taut)] + list(self.integral_xL_error) + 
+   243                                                           # list(e_x_current) + list(e_v_current) + list(Omega_d_desired)
+   244                                                           [t] +
+   245                                                           list(xQ) + list(vQ) +
+   246                                                           list(xL) + list(vL) +
+   247                                                           list(xd) + list(vd) + list(ad) +
+   248                                                           list(q) + list(dq) + list(q_d) +
+   249                                                           list(Fn_vector) +
+   250                                                           [f_scalar_thrust_component] + list(F_attitude_ctrl_input) +
+   251                                            #               list(M_torque) + list(Omega_d_desired) +
+   252                                                           list(Omega_d_desired) + 
+   253                                                          # list(R_d.flatten()) +          
+   254                                                           list(e_x_current) + list(e_v_current) +
+   255                                                           list(self.integral_xL_error) +
+   256                                                           [int(is_taut)]
+   257                                                       )
+   258                                                       self.writer.writerow(log_data)
+   259                                           
+   260                                           
+   261       435       4579.0     10.5      0.2          return {
+   262       435       1572.0      3.6      0.1              'f': f_scalar_thrust_component, # 来自 load_attitude_controller
+   263       435       2320.0      5.3      0.1              'M': M_torque,                  # 来自 quadrotor_attitude_controller
+   264       435       1571.0      3.6      0.1              'q': q,
+   265       435       1729.0      4.0      0.1              'dq': dq,
+   266       435       1414.0      3.3      0.1              'q_d': q_d,                     # 来自 load_position_controller
+   267       435       1778.0      4.1      0.1              'F': F_attitude_ctrl_input,     # 来自 load_attitude_controller
+   268       435       1848.0      4.2      0.1              'taut': is_taut,                 # 使用修正后的 is_taut
+   269       435       1457.0      3.3      0.1              'Omega_cmd': Omega_d_desired
+   270                                                   }
+
+Total time: 4.53461 s
+File: modf_offboard_control_cable_vicon_p1.py
+Function: load_tracking_control at line 210
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   210                                               @profile
+   211                                               def load_tracking_control(self):
+   212                                                   # t0_flag = time.monotonic()
+   213       443      44014.0     99.4      1.0          now = self.get_clock().now().nanoseconds / 1e9
+   214       443       2850.0      6.4      0.1          dt = now - self._last_time
+   215       443       2422.0      5.5      0.1          self._last_time = now
+   216                                                   # print(f"Callback interval dt = {dt*1000:.1f} ms")
+   217                                                  
+   218       443       2921.0      6.6      0.1          thrust_max = quad_params['thrust_max']
+   219       443     211227.0    476.8      4.7          self.publish_offboard_control_heartbeat_signal(body_rate=True)
+   220                                           
+   221       443      33898.0     76.5      0.7          t = (self.get_clock().now().nanoseconds / 1e9) - self.t_0
+   222       443       3878.0      8.8      0.1          if t > self.trajectory.t_final:
+   223         8         32.0      4.0      0.0              self.mission_accomplished = True
+   224         8       4069.0    508.6      0.1              self.land()
+   225         8         40.0      5.0      0.0              return t
+   226                                           #        t0_traj = time.monotonic()
+   227       435     830898.0   1910.1     18.3          flat_output = self.trajectory.update(t)
+   228                                           #        t1_traj = time.monotonic()
+   229                                           #        self.get_logger().info(f"Trajectory update time: {(t1_traj - t0_traj)*1000:.6f} ms")
+   230       435       9889.0     22.7      0.2          xQ = np.array(self.state[0:3])
+   231       435       4572.0     10.5      0.1          vQ = np.array(self.state[3:6])
+   232       435       1980.0      4.6      0.0          quat = self.state[6:10]
+   233                                                   # t0_flag = time.monotonic()
+   234       435      72413.0    166.5      1.6          R = Rotation.from_quat([quat[1], quat[2], quat[3], quat[0]]).as_matrix()
+   235                                                   # t1_flag = time.monotonic()
+   236                                                   # self.get_logger().info(f"Flag time: {(t1_flag - t0_flag)*1000:.6f} ms")
+   237                                                   # R = quat2mat(quat)
+   238       435       8155.0     18.7      0.2          Omega = np.array(self.state[10:13])
+   239                                           
+   240       435       2455.0      5.6      0.1          if self.load_pose is not None:
+   241                                           #        if True:
+   242                                                       xL = np.array([
+   243                                                           self.load_pose.pose.position.x,
+   244                                                           self.load_pose.pose.position.y,
+   245                                                           -self.load_pose.pose.position.z
+   246                                                       ])
+   247                                                       vL = self.vL_estimate
+   248                                                   else:
+   249       435      56127.0    129.0      1.2              xL = xQ + 0.3 * R @ np.array([0, 0, -1])
+   250       435       3461.0      8.0      0.1              vL = vQ
+   251                                           
+   252       435       3467.0      8.0      0.1          state = {
+   253       435       1825.0      4.2      0.0              'xQ': xQ,
+   254       435       1904.0      4.4      0.0              'vQ': vQ,
+   255       435       1744.0      4.0      0.0              'R': R,
+   256       435       1924.0      4.4      0.0              'Omega': Omega,
+   257       435       2161.0      5.0      0.0              'xL': xL,
+   258       435       1740.0      4.0      0.0              'vL': vL,
+   259       435       3731.0      8.6      0.1              'w': np.zeros(3)
+   260                                                   }
+   261                                           
+   262                                           #        t0_load = time.monotonic()
+   263       435    2857720.0   6569.5     63.0          out = self.load_controller.update(self.control_frequency, state, flat_output, t=t)
+   264                                           #        t1_load = time.monotonic()
+   265       435       4835.0     11.1      0.1          t0_flag = time.monotonic()
+   266                                           #        self.get_logger().info(f"controller update time: {(t1_load - t1_load)*1000:.6f} ms")
+   267       435       3880.0      8.9      0.1          self.controller_counter +=1
+   268       435       1859.0      4.3      0.0          f = out['f']
+   269       435       1976.0      4.5      0.0          Omega_cmd = out['Omega_cmd']
+   270                                           
+   271       435      56643.0    130.2      1.2          msg = VehicleRatesSetpoint()
+   272       435       8911.0     20.5      0.2          msg.roll = Omega_cmd[0]
+   273       435       6707.0     15.4      0.1          msg.pitch = -Omega_cmd[1]
+   274       435       4618.0     10.6      0.1          msg.yaw = -Omega_cmd[2]
+   275       435      77260.0    177.6      1.7          msg.thrust_body = [0.0, 0.0, -f / thrust_max]
+   276       435      60118.0    138.2      1.3          msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
+   277       435     129430.0    297.5      2.9          self.vehicle_rates_setpoint_publisher.publish(msg)
+   278       435       5184.0     11.9      0.1          t1_flag = time.monotonic()
+   279                                                   # self.get_logger().info(f"Flag time: {(t1_flag - t0_flag)*1000:.6f} ms")
+   280       435       1677.0      3.9      0.0          return t
+

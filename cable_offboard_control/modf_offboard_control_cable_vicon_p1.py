@@ -16,8 +16,14 @@ import traceback
 from george_params import quad_params
 from load_ctrl.LoadController import LoadController
 # from Traj.PolyTrajPhase1_2 import PolyTrajPhase1_2 as PolyTrajPhase2
-from Traj.modf_PolyTrajPhase_1 import PolyTrajPhase1 as PolyTrajPhase1
+# from Traj.modf_PolyTrajPhase_1 import PolyTrajPhase1 as PolyTrajPhase1
+from Traj.total_phase_traj import PolyTrajPhase1
 from Traj.PolyTraj_hold import HoldTrajectory
+
+# for time measuring
+from line_profiler import LineProfiler
+import atexit, csv
+
 
 def quat2mat(q):
    x, y, z, w = q
@@ -74,8 +80,8 @@ class OffboardControl(Node):
         self.target_offset = 10.0014
         self.controller_counter = 0
 
-        self.trajectory = PolyTrajPhase1(h0=self.h0, vy0=self.vy0, vx0=self.vx0, target_x=self.target_offset, target_y=self.target_offset)
-        
+        #self.trajectory = PolyTrajPhase1(h0=self.h0, vy0=self.vy0, vx0=self.vx0, target_x=self.target_offset, target_y=self.target_offset)
+        self.trajectory = PolyTrajPhase1(t_final = 6)
 #        self.trajectory = HoldTrajectory()
         load_params = {
            'mQ': quad_params['mass'],
@@ -98,7 +104,7 @@ class OffboardControl(Node):
 
 
 
-        self.load_controller = LoadController(load_params, logging=True)
+        self.load_controller = LoadController(load_params, logging=False)
         initState = self.trajectory.update(0)
         self.initialReferencePosition = initState['x']
         self.t_0 = self.get_clock().now().nanoseconds / 1e9
@@ -201,7 +207,7 @@ class OffboardControl(Node):
             self.get_logger().info("Reached initial position. Starting trajectory tracking...")
             self.reached_initial_waypoint = True
             self.t_0 = self.get_clock().now().nanoseconds / 1e9
-
+    @profile
     def load_tracking_control(self):
         # t0_flag = time.monotonic()
         now = self.get_clock().now().nanoseconds / 1e9
@@ -285,7 +291,7 @@ class OffboardControl(Node):
             self.publish_offboard_control_heartbeat_signal(pos=True)
             if self.reached_initial_waypoint:
                 self.load_tracking_control()
-                self.get_logger().info("Reach init point")
+                # self.get_logger().info("Reach init point")
             else:
                 self.move_to_initial_waypoint()
 

@@ -1,7 +1,7 @@
 import numpy as np
 from .vec_2_skew import vec_2_skew
 
-def load_attitude_controller(mQ, l, R, Fn, q, d_q, q_d, q_d_m1, q_d_m2, dt, kq, kw, la_counter, dq_d_prev):
+def load_attitude_controller(mQ, l, R, Fn, q, d_q, q_d, q_d_m1, q_d_m2, dt, kq, kw, dq_d_prev):
     # align the cable direction q with the desired cable direction q_d
 
     dq_d_alpha = 0.5
@@ -28,7 +28,6 @@ def load_attitude_controller(mQ, l, R, Fn, q, d_q, q_d, q_d_m1, q_d_m2, dt, kq, 
     
     F = Fn - Fpd - Fff
 
-    la_counter +=1
     dq_d_prev = dq_d
 
     return F, f

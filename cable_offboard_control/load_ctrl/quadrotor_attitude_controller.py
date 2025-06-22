@@ -1,8 +1,9 @@
 import numpy as np
 from .skew_2_vec import skew_2_vec
 from .vec_2_skew import vec_2_skew
+import scipy as sp
 
-def quadrotor_attitude_controller(JQ, F, b1, R, R_d_m1, dt, Omega, Omega_d_m1, kR, kOmega,qa_counter):
+def quadrotor_attitude_controller(JQ, F, b1, R, R_d_m1, dt, Omega, Omega_d_m1, kR, kOmega):
     
     b3_d = F / np.linalg.norm(F)
     b1_d = np.cross(b1, b3_d) / np.linalg.norm(np.cross(b1, b3_d))
@@ -23,5 +24,4 @@ def quadrotor_attitude_controller(JQ, F, b1, R, R_d_m1, dt, Omega, Omega_d_m1, k
     Omega_cmd = -kR * e_R - kOmega* e_Omega + R.T @ R_d @ Omega_d
     # return M.reshape(3,), R_d, Omega_d
     M = 0
-    qa_counter += 1
     return M, R_d, Omega_cmd

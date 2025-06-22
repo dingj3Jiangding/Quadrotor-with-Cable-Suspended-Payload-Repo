@@ -1,6 +1,6 @@
 import numpy as np
 
-def load_position_controller(xL, xd, vL, vd, d2_xd, integral_xL, mQ, mL, g, l, q, d_q, kx, kv, kI, lp_counter):
+def load_position_controller(xL, xd, vL, vd, d2_xd, integral_xL, mQ, mL, g, l, q, d_q, kx, kv, kI):
     
     e_x = xL - xd           # load position error
     e_v = vL - vd           # load vel error
@@ -29,6 +29,5 @@ def load_position_controller(xL, xd, vL, vd, d2_xd, integral_xL, mQ, mL, g, l, q
     Fn = np.dot(A, q) * q
 
     q_d = - A / np.linalg.norm(A)
-    lp_counter +=1
 
     return q_d, Fn
