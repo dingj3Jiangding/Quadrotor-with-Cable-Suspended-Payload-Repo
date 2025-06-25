@@ -91,6 +91,10 @@ class OffboardControl(Node):
         self._last_time = self.get_clock().now().nanoseconds / 1e9
         self.mission_accomplished = False
 
+        self.hover_duration = 3.0
+        self.hover_start_time = None
+        self.init_hover_complete = False
+
 #        self.trajectory = HoldTrajectory()
         load_params = {
            'mQ': quad_params['mass'],
@@ -212,9 +216,10 @@ class OffboardControl(Node):
             self.trajectory_setpoint_publisher.publish(msg)
             self.reached_initial_waypoint = False
         else:
-            self.get_logger().info("Reached initial position. Starting trajectory tracking...")
+            self.get_logger().info("Reached initial position. Starting hovering...")
             self.reached_initial_waypoint = True
-            self.t_0 = self.get_clock().now().nanoseconds / 1e9
+            # self.t_0 = self.get_clock().now().nanoseconds / 1e9
+            self.hover_start_time = self.get_clock().now().nanoseconds / 1e9
 
     def load_tracking_control(self):
         # t0_flag = time.monotonic()
@@ -306,6 +311,7 @@ class OffboardControl(Node):
         return t_rel
 
     def timer_callback(self) -> None:
+        
         if self.offboard_setpoint_counter == 20:
             self.engage_offboard_mode()
             self.arm()
@@ -313,14 +319,6 @@ class OffboardControl(Node):
             self.offboard_setpoint_counter +=1
         # self.get_logger().info(f"vehicle_status.nav_state = {self.vehicle_status.nav_state} | "
         #     f"NAVIGATION_STATE_OFFBOARD = {VehicleStatus.NAVIGATION_STATE_OFFBOARD}") 
-        if self.vehicle_status.nav_state == VehicleStatus.NAVIGATION_STATE_OFFBOARD:
-            self.publish_offboard_control_heartbeat_signal(pos=True)
-            if self.reached_initial_waypoint:
-                self.load_tracking_control()
-                # self.get_logger().info("Reach init point")
-            else:
-                self.move_to_initial_waypoint()
-
         if self.offboard_setpoint_counter < 20:
             self.publish_offboard_control_heartbeat_signal(pos=True)
             sp = TrajectorySetpoint()
@@ -331,6 +329,41 @@ class OffboardControl(Node):
             sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
             self.trajectory_setpoint_publisher.publish(sp)
             self.offboard_setpoint_counter += 1
+            return
+        
+        if self.vehicle_status.nav_state == VehicleStatus.NAVIGATION_STATE_OFFBOARD:
+            self.publish_offboard_control_heartbeat_signal(pos=True)
+            
+            if not self.reached_initial_waypoint:
+                self.move_to_initial_waypoint()
+                return 
+            
+            if not self.init_hover_complete:
+                now = self.get_clock().now().nanoseconds / 1e9
+
+                if self.hover_start_time is None:
+                    self.hover_start_time = now
+                    self.get_logger().info("Reached initial position. Hovering 3 s ...")
+
+                if now - self.hover_start_time < self.hover_duration:
+                    sp = TrajectorySetpoint()
+                    sp.position = [
+                        self.initial_waypoint[0],
+                        -self.initial_waypoint[1],
+                        -self.initial_waypoint[2],
+                    ]
+                    sp.yaw = 0.0
+                    sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
+                    self.trajectory_setpoint_publisher.publish(sp)
+                    return                        
+
+                self.init_hover_complete = True
+                self.t_0 = now                    
+                self.get_logger().info("Hover complete. Start trajectory tracking.")
+
+            self.load_tracking_control()
+
+
 
 def main(args=None) -> None:
     print('Starting offboard control node...')
